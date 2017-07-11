@@ -1,14 +1,21 @@
 import PyPDF2
-import pyttsx
 from gtts import gTTS
-import pdfminer 
 import os
 
-clip_location = './clips/'
+from urllib.request import urlopen
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from pdfminer.converter import TextConverter
+from pdfminer.layout import LAParams
+from pdfminer.pdfpage import PDFPage
+from io import StringIO, BytesIO
+# from cStringIO import StringIO
 
-tts = gTTS(text='Good morning', lang='en')
-tts.save(clip_location + "good.mp3")
-os.system("mpg123 " + clip_location + "good.mp3")
+
+# clip_location = './clips/'
+
+# tts = gTTS(text='Good morning', lang='en')
+# tts.save(clip_location + "good.mp3")
+# os.system("mpg123 " + clip_location + "good.mp3")
 
 class CharacterLine:
     words = ""
@@ -63,19 +70,47 @@ class Lines:
 
 # ---------------- #
 
-convert('CPF_play_formatting2.pdf')
-
 # script = open('CPF_play_formatting2.pdf', 'rb')
-with open('CPF_play_formatting2.pdf', 'rb') as script:
-    pdf_script = PyPDF2.PdfFileReader(script)
+# with open('CPF_play_formatting2.pdf', 'rb') as script:
+#     pdf_script = PyPDF2.PdfFileReader(script)
 
-    characters = ["DONALD", "BLAIRE"]
-    script_lines = Lines(characters)
+#     characters = ["DONALD", "BLAIRE"]
+#     script_lines = Lines(characters)
 
-    page_obj = pdf_script.getPage(10)
-    page = page_obj.extractText()
+#     page_obj = pdf_script.getPage(10)
+#     page = page_obj.extractText()
 
-    # print(page)
-    script_lines.extract_lines(page)
+#     # print(page)
+#     script_lines.extract_lines(page)
+
+def convert_pdf_to_txt(path):
+    rsrcmgr = PDFResourceManager()
+    retstr = StringIO()
+    codec = 'utf-8'
+    laparams = LAParams()
+    device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
+    fp = open(path, 'rb')
+    interpreter = PDFPageInterpreter(rsrcmgr, device)
+    password = ""
+    maxpages = 0
+    caching = True
+    pagenos=set()
+    print(pagenos)
+    for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages, password=password,caching=caching, check_extractable=True):
+        interpreter.process_page(page)
+    fp.close()
+    device.close()
+    st = retstr.getvalue()
+    retstr.close()
+
+    f = open('workfile', 'w')
+    f.write(st)
+    return st
 
 
+if __name__ == "__main__":
+    #scrape = open("../warandpeace/chapter1.pdf", 'rb') # for local files
+    # scrape = urlopen("http://pythonscraping.com/pages/warandpeace/chapter1.pdf") # for external files
+    pdfFile = convert_pdf_to_txt('CPF_play_formatting2.pdf')
+
+    print(pdfFile)
